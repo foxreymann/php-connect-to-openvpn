@@ -17,6 +17,8 @@ https://help.vpntunnel.com/support/solutions/articles/5000613671-how-do-i-save-m
 
 class OpenVpn {
   private $isWindows;
+  private $pid = null;
+
 
   function __construct() {
     $this->isWindows = (stripos(PHP_OS, 'WIN') === 0);
@@ -30,9 +32,8 @@ class OpenVpn {
       $configurationFile = $configs[rand(2,$numberOfConfigs+1)];
 
       if($this->isWindows) {
-        $command = 'start /b openvpn "'.$directory.$configurationFile.'"';
-        echo $command;
-        shell_exec($command);
+        $command = 'openvpn "'.$directory.$configurationFile.'"';
+        $this->pid = proc_open($cmd, [STDIN, STDOUT, STDOUT], $pipes); 
       } else {
         $command = 'sudo bash -c "exec nohup openvpn '.$directory.$configurationFile.' &> /dev/null &"';
         echo $command;
@@ -42,6 +43,10 @@ class OpenVpn {
   }
 
   function disconnect() {
+      if ($this->pid) {
+        proc_terminate($this->pid);
+      }
+
       $command = 'sudo killall openvpn';
       shell_exec($command);
   }
