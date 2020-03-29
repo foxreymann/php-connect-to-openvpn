@@ -26,29 +26,29 @@ class OpenVpn {
 
 
   function connect() {
-      $directory = $this->isWindows ? 'C:\\Program Files\\OpenVPN\\config\\ovpn_tcp\\' : '/etc/openvpn/ovpn_tcp/';
-      $configs = array_diff(scandir($directory), array('..', '.'));
-      $numberOfConfigs = count($configs);
-      $configurationFile = $configs[rand(2,$numberOfConfigs+1)];
+    $directory = $this->isWindows ? 'C:\\Program Files\\OpenVPN\\config\\ovpn_tcp\\' : '/etc/openvpn/ovpn_tcp/';
+    $configs = array_diff(scandir($directory), array('..', '.'));
+    $numberOfConfigs = count($configs);
+    $configurationFile = $configs[rand(2,$numberOfConfigs+1)];
 
-      if($this->isWindows) {
-        $command = 'openvpn "'.$directory.$configurationFile.'"';
-        $this->pid = proc_open($command, [STDIN, STDOUT, STDOUT], $pipes);
-      } else {
-        $command = 'sudo bash -c "exec nohup openvpn '.$directory.$configurationFile.' &> /dev/null &"';
-        echo $command;
-        exec($command);
-      }
-
+    $command = 'openvpn "'.$directory.$configurationFile.'"';
+    $this->pid = proc_open($command, [STDIN, STDOUT, STDOUT], $pipes);
   }
 
   function disconnect() {
-      if ($this->isWindows && $this->pid) {
-        proc_terminate($this->pid);
-      } else {
-       $command = 'sudo killall openvpn';
-       shell_exec($command);
-      }
+    if ($this->pid) {
+      proc_terminate($this->pid);
+    }
+
+    // as proc_terminate usually doens't work
+    if ($this->isWindows && $this->pid) {
+      $status = proc_get_status($this->pid);
+      return exec('taskkill /F /T /PID '.$status['pid']);
+    }
+
+    // Linux
+    $command = 'sudo killall openvpn';
+    shell_exec($command);
   }
 
 }
@@ -58,10 +58,10 @@ echo 'original ip:'.file_get_contents("http://ipecho.net/plain").PHP_EOL;
 $openVpn = new OpenVpn();
 $openVpn->connect();
 
-sleep(20);
+sleep(10);
 echo 'vpn ip:'.file_get_contents("http://ipecho.net/plain").PHP_EOL;
 echo 'do some scraping now'.PHP_EOL;
-sleep(20);
+sleep(10);
 
 $openVpn->disconnect();
 
