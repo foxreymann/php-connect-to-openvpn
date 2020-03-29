@@ -56,6 +56,7 @@ class OpenVpn {
 echo 'original ip:'.file_get_contents("http://ipecho.net/plain").PHP_EOL;
 
 $openVpn = new OpenVpn();
+
 $openVpn->connect();
 
 sleep(10);
