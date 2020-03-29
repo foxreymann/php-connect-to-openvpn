@@ -33,7 +33,7 @@ class OpenVpn {
 
       if($this->isWindows) {
         $command = 'openvpn "'.$directory.$configurationFile.'"';
-        $this->pid = proc_open($cmd, [STDIN, STDOUT, STDOUT], $pipes); 
+        $this->pid = proc_open($command, [STDIN, STDOUT, STDOUT], $pipes);
       } else {
         $command = 'sudo bash -c "exec nohup openvpn '.$directory.$configurationFile.' &> /dev/null &"';
         echo $command;
@@ -43,12 +43,12 @@ class OpenVpn {
   }
 
   function disconnect() {
-      if ($this->pid) {
+      if ($this->isWindows && $this->pid) {
         proc_terminate($this->pid);
+      } else {
+       $command = 'sudo killall openvpn';
+       shell_exec($command);
       }
-
-      $command = 'sudo killall openvpn';
-      shell_exec($command);
   }
 
 }
@@ -60,7 +60,8 @@ $openVpn->connect();
 
 sleep(20);
 echo 'vpn ip:'.file_get_contents("http://ipecho.net/plain").PHP_EOL;
-echo 'do some scraping now'.PHO_EOL;
+echo 'do some scraping now'.PHP_EOL;
+sleep(20);
 
 $openVpn->disconnect();
 
